@@ -56,6 +56,13 @@ Run `firebase login` to login to your Firebase Console. Run `firebase deploy` to
 
 `firebase deploy --only functions:functionName`  
 
+### To call the firebase functions 
+Note: You must provide the corresponding params
+
+`https://us-central1-covid19-bd.cloudfunctions.net/onUserResponseSubmit`
+
+`https://us-central1-covid19-bd.cloudfunctions.net/getUserByUserPhone`
+
 ### Set Environment Variable  in firebase function
 firebase functions:config:set service.name="your env var name "
 firebase functions:config:set auth.migration_api=""
