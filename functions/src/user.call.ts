@@ -20,7 +20,7 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 		const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		const is_elder = parseInt(userResponse['age']['answer']) > elderAge ? '1' : '0';
-		const has_diseases_history = userResponse['high_risk']['answer'] === 'true' ? '1' : '0';
+		const has_diseases_history = userResponse['high_risk']['answer'].toString() === 'true' ? '1' : '0';
 		const symptom_risk = getSymptomRisk(userResponse);
 		const epidemic_risk = getEpidemicRisk(userResponse);
 		const finalRiskAssessment = getFinalRiskAssessment(symptom_risk, is_elder, has_diseases_history, epidemic_risk);
@@ -96,9 +96,9 @@ export const getResponsesByOrgName = functions.https.onCall(async (orgName) => {
 });
 
 function getSymptomRisk(data: any): number {
-	const is_feverish = data['is_feverish']['answer'] === 'true' ? '1' : '0';
-	const has_sore_throat = data['has_sore_throat']['answer'] === 'true' ? '1' : '0';
-	const has_breathlessness = data['has_breathlessness']['answer'] === 'true' ? '1' : '0';
+	const is_feverish = data['is_feverish']['answer'].toString() === 'true' ? '1' : '0';
+	const has_sore_throat = data['has_sore_throat']['answer'].toString() === 'true' ? '1' : '0';
+	const has_breathlessness = data['has_breathlessness']['answer'].toString() === 'true' ? '1' : '0';
 
 	if (`${is_feverish}${has_sore_throat}${has_breathlessness}` === `000`) return 0;
 	if (`${is_feverish}${has_sore_throat}${has_breathlessness}` === `001`) return 2;
@@ -113,9 +113,9 @@ function getSymptomRisk(data: any): number {
 }
 
 function getEpidemicRisk(data: any) {
-	const is_visited_abroad = data['is_visited_abroad']['answer'] === 'true' ? '1' : '0';
-	const is_contacted_with_covid = data['is_contacted_with_covid']['answer'] === 'true' ? '1' : '0';
-	const is_contacted_with_family_who_cough = data['is_contacted_with_family_who_cough']['answer'] === 'true' ? '1' : '0';
+	const is_visited_abroad = data['is_visited_abroad']['answer'].toString() === 'true' ? '1' : '0';
+	const is_contacted_with_covid = data['is_contacted_with_covid']['answer'].toString() === 'true' ? '1' : '0';
+	const is_contacted_with_family_who_cough = data['is_contacted_with_family_who_cough']['answer'].toString() === 'true' ? '1' : '0';
 
 	if (`${is_visited_abroad}${is_contacted_with_covid}${is_contacted_with_family_who_cough}` === `000`) return 0;
 	if (`${is_visited_abroad}${is_contacted_with_covid}${is_contacted_with_family_who_cough}` === `001`) return 1;
@@ -181,5 +181,5 @@ function getAssessmentMessage(risk: number) {
 	if (`${risk}` === `5`) return 'Extra Urgent';
 	if (`${risk}` === `6`) return 'VIP';
 
-	return 'Safe';
+	return ''
 }
