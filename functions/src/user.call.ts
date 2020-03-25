@@ -4,8 +4,8 @@ import Utils from "./util/cf-helper-methods";
 
 const db = admin.firestore();
 const USER_RESPONSE_COLLECTION_PATH = 'corona-user-responses';
-const COVIDARC_COLLECTION_PATH = 'COVIDARC';
-const COVIDARC_COLLECTION_REF = db.collection(COVIDARC_COLLECTION_PATH);
+//const COVIDARC_COLLECTION_PATH = 'COVIDARC';
+//const COVIDARC_COLLECTION_REF = db.collection(COVIDARC_COLLECTION_PATH);
 const USER_RESPONSE_COLLECTION_PATH_REF = db.collection(USER_RESPONSE_COLLECTION_PATH);
 
 /**
@@ -17,7 +17,7 @@ const USER_RESPONSE_COLLECTION_PATH_REF = db.collection(USER_RESPONSE_COLLECTION
 export const onUserResponseSubmit = functions.https.onCall(async (userResponse) => {
 	const elderAge = 60;
 	try {
-		/*let uniqueid=*/await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
+		const uniqueid=await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		const is_elder = parseInt(userResponse['age']['answer']) > elderAge ? '1' : '0';
 		const has_diseases_history = userResponse['high_risk']['answer'] === 'true' ? '1' : '0';
@@ -27,7 +27,8 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 		const assessmentMessage = getAssessmentMessage(finalRiskAssessment);
 
 		return {
-			assessmentMessage
+			assessmentMessage, 
+			uniqueidS: uniqueid.id
 		};
 
 	} catch (error) {
@@ -39,12 +40,46 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 export const getResponsesByUserPhone = functions.https.onCall(async (userNum) => {
 	try {
 		console.log(userNum);
+		if(!('number' in userNum)) return {
+			error: "Invalid parameter"
+		}
 		const phoneNumber = userNum['number'];
-		if (!Utils.isValidPhoneNumber(phoneNumber)) throw new Error('Not Valid Phone, Example 01719114455')
+		
+		if (!Utils.isValidPhoneNumber(phoneNumber)) return {
+			error: "Not Valid Phone, Example 01719114455"
+		}
 
 		const responses: any[] = [];
 		const querySnap = await USER_RESPONSE_COLLECTION_PATH_REF.where('user_phone', '==', phoneNumber).get();
-		if (querySnap.empty) return []
+		if (querySnap.empty) return {
+			error: "Phone Number Does Not Exist"
+		}
+
+		await Promise.all(querySnap.docs.map(async (doc) => {
+			responses.push(doc.data());
+		}));
+
+		return {
+			responses
+		};
+	} catch (error) {
+		console.error("getResponsesByUserPhone Error:", error);
+		return error;
+	}
+});
+
+export const getResponsesByOrgName = functions.https.onCall(async (orgName) => {
+	try {
+		if(!('organization_name' in orgName))return {
+			error: "Invalid parameter"
+		}
+		const orgnameS = orgName['organization_name'];
+
+		const responses: any[] = [];
+		const querySnap = await USER_RESPONSE_COLLECTION_PATH_REF.where('organization_name', '==', orgnameS).get();
+		if (querySnap.empty) return {
+			error: "Organization Does Not Exist"
+		}
 
 		await Promise.all(querySnap.docs.map(async (doc) => {
 			responses.push(doc.data());
