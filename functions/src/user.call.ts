@@ -36,12 +36,18 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 		const assessmentMessage = getAssessmentMessage(finalRiskAssessment);
 		
 		userResponse['risk']=finalRiskAssessment;
+		
+		const riskData = await db.collection('corona-response-template').doc(finalRiskAssessment.toString()).get();
 		const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
-
+		
+		//const numbers: any[]=[];
+		
 		return {
 			assessmentMessage,
 			risk: finalRiskAssessment,
-			uniqueId: response.id
+			uniqueId: response.id,
+			instructions: riskData.get('message'),
+			numbers:riskData.get('numbers')
 		};
 
 	} catch (error) {
