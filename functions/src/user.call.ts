@@ -17,7 +17,7 @@ const USER_RESPONSE_COLLECTION_PATH_REF = db.collection(USER_RESPONSE_COLLECTION
 export const onUserResponseSubmit = functions.https.onCall(async (userResponse) => {
 	const elderAge = 60;
 	try {
-		const uniqueid=await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
+		const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		const is_elder = parseInt(userResponse['age']['answer']) > elderAge ? '1' : '0';
 		const has_diseases_history = userResponse['high_risk']['answer'] === 'true' ? '1' : '0';
@@ -27,8 +27,9 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 		const assessmentMessage = getAssessmentMessage(finalRiskAssessment);
 
 		return {
-			assessmentMessage, 
-			uniqueidS: uniqueid.id
+			assessmentMessage,
+			risk: finalRiskAssessment,
+			uniqueId: response.id
 		};
 
 	} catch (error) {
@@ -40,11 +41,11 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 export const getResponsesByUserPhone = functions.https.onCall(async (userNum) => {
 	try {
 		console.log(userNum);
-		if(!('number' in userNum)) return {
+		if (!('number' in userNum)) return {
 			error: "Invalid parameter"
 		}
 		const phoneNumber = userNum['number'];
-		
+
 		if (!Utils.isValidPhoneNumber(phoneNumber)) return {
 			error: "Not Valid Phone, Example 01719114455"
 		}
@@ -70,7 +71,7 @@ export const getResponsesByUserPhone = functions.https.onCall(async (userNum) =>
 
 export const getResponsesByOrgName = functions.https.onCall(async (orgName) => {
 	try {
-		if(!('organization_name' in orgName))return {
+		if (!('organization_name' in orgName)) return {
 			error: "Invalid parameter"
 		}
 		const orgnameS = orgName['organization_name'];
