@@ -1,7 +1,13 @@
-import * as functions from 'firebase-functions';
-import * as admin     from "firebase-admin";
+import * as functions         from 'firebase-functions';
+import * as admin             from "firebase-admin";
+import Utils                  from "./util/cf-helper-methods";
+import { FunErrorCode }       from "./util/fun-error.code";
+import { FunctionsErrorCode } from "firebase-functions/lib/providers/https";
 
-export const USER_RESPONSE_COLLECTION_PATH = 'corona-user-responses';
+const db = admin.firestore();
+const USER_RESPONSE_COLLECTION_PATH = 'corona-user-responses';
+const COVIDARC_COLLECTION_PATH = 'COVIDARC';
+const COVIDARC_COLLECTION_REF = db.collection(COVIDARC_COLLECTION_PATH);
 
 /**
  * Details: https://docs.google.com/spreadsheets/d/13x-6koKiqRnIK6_trJX-abLJyi65OzqV621u9iwM1qw/edit#gid=2008915096
@@ -26,8 +32,25 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
         };
 
     } catch (error) {
-        console.error("OnUserResponse: Error", error);
-        throw new functions.https.HttpsError('invalid-argument', error);
+        console.error("onUserResponseSubmit Error:", error);
+        return sendError(error.message, FunErrorCode.INVALID_ARGUMENT);
+    }
+});
+
+export const getUserByUserPhone = functions.https.onCall(async (reqParams) => {
+    try {
+        const phoneNumber = reqParams.phoneNumber;
+        if (!Utils.isValidPhoneNumber(phoneNumber)) sendError('Phone number is missing!', FunErrorCode.INVALID_ARGUMENT);
+
+        const user = await getUserByPhone(phoneNumber);
+        if (!Utils.hasValue(user)) sendError('User does not exist with this phone number', FunErrorCode.NOTFOUND);
+
+        return {
+            user
+        };
+    } catch (error) {
+        console.error("getUserByUserPhone Error:", error);
+        return sendError(error.message, FunErrorCode.INVALID_ARGUMENT);
     }
 });
 
@@ -118,4 +141,12 @@ function getAssessmentMessage(risk: number) {
     if (`${risk}` === `6`) return 'VIP';
 
     return 'Safe';
+}
+
+async function getUserByPhone(phoneNumber: string) {
+    return COVIDARC_COLLECTION_REF.doc(phoneNumber).get();
+}
+
+function sendError(errorMessage: string, errorCode: FunctionsErrorCode) {
+    throw new functions.https.HttpsError(errorCode, errorMessage, errorMessage);
 }
