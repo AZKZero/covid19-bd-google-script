@@ -6,6 +6,7 @@ const db = admin.firestore();
 const USER_RESPONSE_COLLECTION_PATH = 'corona-user-responses';
 const COVIDARC_COLLECTION_PATH = 'COVIDARC';
 const COVIDARC_COLLECTION_REF = db.collection(COVIDARC_COLLECTION_PATH);
+const USER_RESPONSE_COLLECTION_PATH_REF = db.collection(USER_RESPONSE_COLLECTION_PATH);
 
 /**
  * Details: https://docs.google.com/spreadsheets/d/13x-6koKiqRnIK6_trJX-abLJyi65OzqV621u9iwM1qw/edit#gid=2008915096
@@ -16,7 +17,7 @@ const COVIDARC_COLLECTION_REF = db.collection(COVIDARC_COLLECTION_PATH);
 export const onUserResponseSubmit = functions.https.onCall(async (userResponse) => {
 	const elderAge = 60;
 	try {
-		await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
+		/*let uniqueid=*/await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		const is_elder = parseInt(userResponse['age']['answer']) > elderAge ? '1' : '0';
 		const has_diseases_history = userResponse['high_risk']['answer'] === 'true' ? '1' : '0';
@@ -35,13 +36,14 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 	}
 });
 
-export const getResponsesByUserPhone = functions.https.onCall(async (reqParams) => {
+export const getResponsesByUserPhone = functions.https.onCall(async (userNum) => {
 	try {
-		const phoneNumber = reqParams.phoneNumber;
+		console.log(userNum);
+		const phoneNumber = userNum['number'];
 		if (!Utils.isValidPhoneNumber(phoneNumber)) throw new Error('Not Valid Phone, Example 01719114455')
 
 		const responses: any[] = [];
-		const querySnap = await COVIDARC_COLLECTION_REF.where('user_phone', '==', phoneNumber).get();
+		const querySnap = await USER_RESPONSE_COLLECTION_PATH_REF.where('user_phone', '==', phoneNumber).get();
 		if (querySnap.empty) return []
 
 		await Promise.all(querySnap.docs.map(async (doc) => {
