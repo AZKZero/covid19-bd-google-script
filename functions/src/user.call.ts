@@ -1,8 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from "firebase-admin";
 import Utils from "./util/cf-helper-methods";
-import { FunErrorCode } from "./util/fun-error.code";
-import { FunctionsErrorCode } from "firebase-functions/lib/providers/https";
 
 const db = admin.firestore();
 const USER_RESPONSE_COLLECTION_PATH = 'corona-user-responses';
@@ -40,7 +38,7 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 export const getResponsesByUserPhone = functions.https.onCall(async (reqParams) => {
 	try {
 		const phoneNumber = reqParams.phoneNumber;
-		if (!Utils.isValidPhoneNumber(phoneNumber)) sendError('Not Valid Phone, Example 01719114455', FunErrorCode.INVALID_ARGUMENT);
+		if (!Utils.isValidPhoneNumber(phoneNumber)) throw new Error('Not Valid Phone, Example 01719114455')
 
 		const responses: any[] = [];
 		const querySnap = await COVIDARC_COLLECTION_REF.where('user_phone', '==', phoneNumber).get();
