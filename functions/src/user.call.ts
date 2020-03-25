@@ -7,6 +7,8 @@ const USER_RESPONSE_COLLECTION_PATH = 'corona-user-responses';
 //const COVIDARC_COLLECTION_PATH = 'COVIDARC';
 //const COVIDARC_COLLECTION_REF = db.collection(COVIDARC_COLLECTION_PATH);
 const USER_RESPONSE_COLLECTION_PATH_REF = db.collection(USER_RESPONSE_COLLECTION_PATH);
+const ORGANIZATION_COLLECTION_PATH = 'organisations';
+const ORGANIZATION_COLLECTION_REF = db.collection(ORGANIZATION_COLLECTION_PATH);
 
 /**
  * Details: https://docs.google.com/spreadsheets/d/13x-6koKiqRnIK6_trJX-abLJyi65OzqV621u9iwM1qw/edit#gid=2008915096
@@ -17,6 +19,13 @@ const USER_RESPONSE_COLLECTION_PATH_REF = db.collection(USER_RESPONSE_COLLECTION
 export const onUserResponseSubmit = functions.https.onCall(async (userResponse) => {
 	const elderAge = 60;
 	try {
+		//const organisationFromReq = userResponse['organization_name'];
+		const organisationIDFromReq = userResponse['organization_id'];
+		
+		const organisationFromDB = await ORGANIZATION_COLLECTION_REF.doc(organisationIDFromReq).get();
+		
+		if(!organisationFromDB.exists) userResponse['organization_name']='anonymous';
+		
 		const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		const is_elder = parseInt(userResponse['age']['answer']) > elderAge ? '1' : '0';
@@ -57,7 +66,9 @@ export const getResponsesByUserPhone = functions.https.onCall(async (userNum) =>
 		}
 
 		await Promise.all(querySnap.docs.map(async (doc) => {
-			responses.push(doc.data());
+			const data=doc.data();
+			data['organization_id']='************';
+			responses.push(data);
 		}));
 
 		return {
@@ -83,7 +94,9 @@ export const getResponsesByOrgName = functions.https.onCall(async (orgName) => {
 		}
 
 		await Promise.all(querySnap.docs.map(async (doc) => {
-			responses.push(doc.data());
+			const data=doc.data();
+			data['organization_id']='************';
+			responses.push(data);
 		}));
 
 		return {
