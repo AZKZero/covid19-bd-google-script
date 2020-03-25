@@ -26,7 +26,7 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 		
 		if(!organisationFromDB.exists) userResponse['organization_name']='anonymous';
 		
-		const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
+		//const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		const is_elder = parseInt(userResponse['age']['answer']) > elderAge ? '1' : '0';
 		const has_diseases_history = userResponse['high_risk']['answer'].toString() === 'true' ? '1' : '0';
@@ -34,6 +34,9 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 		const epidemic_risk = getEpidemicRisk(userResponse);
 		const finalRiskAssessment = getFinalRiskAssessment(symptom_risk, is_elder, has_diseases_history, epidemic_risk);
 		const assessmentMessage = getAssessmentMessage(finalRiskAssessment);
+		
+		userResponse['risk']=finalRiskAssessment;
+		const response = await db.collection(USER_RESPONSE_COLLECTION_PATH).add(userResponse);
 
 		return {
 			assessmentMessage,
