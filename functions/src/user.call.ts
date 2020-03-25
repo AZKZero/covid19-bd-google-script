@@ -33,7 +33,7 @@ export const onUserResponseSubmit = functions.https.onCall(async (userResponse) 
 
 	} catch (error) {
 		console.error("onUserResponseSubmit Error:", error);
-		return sendError(error.message, FunErrorCode.INVALID_ARGUMENT);
+		return error
 	}
 });
 
@@ -55,7 +55,7 @@ export const getResponsesByUserPhone = functions.https.onCall(async (reqParams) 
 		};
 	} catch (error) {
 		console.error("getResponsesByUserPhone Error:", error);
-		return sendError(error.message, FunErrorCode.INVALID_ARGUMENT);
+		return error;
 	}
 });
 
@@ -146,8 +146,4 @@ function getAssessmentMessage(risk: number) {
 	if (`${risk}` === `6`) return 'VIP';
 
 	return 'Safe';
-}
-
-function sendError(errorMessage: string, errorCode: FunctionsErrorCode) {
-	throw new functions.https.HttpsError(errorCode, errorMessage, errorMessage);
 }
